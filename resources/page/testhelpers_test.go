@@ -67,12 +67,14 @@ func newTestPageWithFile(filename string) *testPage {
 	}
 
 	return &testPage{
-		params:   make(map[string]any),
-		data:     make(map[string]any),
-		file:     file,
-		pathInfo: file.FileInfo().Meta().PathInfo,
+		params:       make(map[string]any),
+		data:         make(map[string]any),
+		file:         file,
+		pathInfo:     file.FileInfo().Meta().PathInfo,
+		firstSection: &testPage{section: "a"},
 		currentSection: &testPage{
 			sectionEntries: []string{"a", "b", "c"},
+			ancestors: Pages{&testPage{section: "b"}, &testPage{section: "c"}, &testPage{}},
 		},
 		site: testSite{l: l},
 	}
@@ -109,8 +111,11 @@ type testPage struct {
 
 	file *source.File
 
+	firstSection   *testPage
 	currentSection *testPage
 	sectionEntries []string
+
+	ancestors Pages
 }
 
 func (p *testPage) Aliases() []string {
@@ -202,7 +207,7 @@ func (p *testPage) Filename() string {
 }
 
 func (p *testPage) FirstSection() Page {
-	panic("testpage: not implemented")
+	return p.firstSection
 }
 
 func (p *testPage) FuzzyWordCount(context.Context) int {
@@ -286,7 +291,7 @@ func (p *testPage) IsTranslated() bool {
 }
 
 func (p *testPage) Ancestors() Pages {
-	panic("testpage: not implemented")
+	return p.ancestors
 }
 
 func (p *testPage) Keywords() []string {

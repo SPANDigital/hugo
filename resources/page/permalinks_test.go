@@ -36,7 +36,7 @@ var testdataPermalinks = []struct {
 	{":title", true, nil, "spf13-vim-3.0-release-and-new-website"},
 	{"/:year-:month-:title", true, nil, "/2012-04-spf13-vim-3.0-release-and-new-website"},
 	{"/:year/:yearday/:month/:monthname/:day/:weekday/:weekdayname/", true, nil, "/2012/97/04/April/06/5/Friday/"}, // Dates
-	{"/:section/", true, nil, "/blue/"},                                                                            // Section
+	{"/:section/", true, nil, "/blue/"},                                                                            // Section                                                                       // Section
 	{"/:title/", true, nil, "/spf13-vim-3.0-release-and-new-website/"},                                             // Title
 	{"/:slug/", true, nil, "/the-slug/"},                                                                           // Slug
 	{"/:slugorfilename/", true, nil, "/the-slug/"},                                                                 // Slug or filename
@@ -62,6 +62,23 @@ var testdataPermalinks = []struct {
 		p.title = "mytitle"
 		p.file = source.NewContentFileInfoFrom("/", "_index.md")
 	}, "/test-page/"},
+	{"/:sectionslug/", true, func(p *testPage) {
+		p.firstSection = &testPage{slug: "my-slug"}
+	}, "/my-slug/"},
+	{"/:sectionslugs/", true, func(p *testPage) {
+		p.currentSection.slug = "slug of c"
+		p.currentSection.ancestors[0].(*testPage).slug = "slug b"
+		p.currentSection.ancestors[1].(*testPage).title = "Title A"
+	}, "/title-a/slug-b/slug-of-c/"},
+	{"/:sectionslugs[0]/:sectionslugs[last]/", true, func(p *testPage) {
+		p.currentSection.slug = "last-slug"
+		p.currentSection.ancestors[0].(*testPage).slug = "second-slug" // set to ensure disclusion
+		p.currentSection.ancestors[1].(*testPage).slug = "first-slug"
+	}, "/first-slug/last-slug/"},
+	{"/:sectionslugs[last]/", true, func(p *testPage) {
+		p.currentSection.slug = "last-slug" // set to ensure disclusion
+		p.currentSection.ancestors[1].(*testPage).slug = "first-slug"
+	}, "/last-slug/"},
 	// Failures
 	{"/blog/:fred", false, nil, ""},
 	{"/:year//:title", false, nil, ""},

@@ -62,6 +62,16 @@ func (p PermalinkExpander) callback(attr string) (pageToPermaAttribute, bool) {
 		}, true
 	}
 
+	if strings.HasPrefix(attr, "sectionslugs[") {
+		fn := p.toSliceFunc(strings.TrimPrefix(attr, "sectionslugs"))
+		doWithSections := p.withPageAndSections(p.pageToPermalinkSlugElseTitle, func(s ...string) string {
+			return path.Join(fn(s)...)
+		})
+		return func(p Page, s string) (string, error) {
+			return doWithSections(p.CurrentSection(), s)
+		}, true
+	}
+
 	// Make sure this comes after all the other checks.
 	if referenceTime.Format(attr) != attr {
 		return p.pageToPermalinkDate, true
@@ -87,7 +97,9 @@ func NewPermalinkExpander(urlize func(uri string) string, patterns map[string]ma
 		"weekdayname":           p.pageToPermalinkDate,
 		"yearday":               p.pageToPermalinkDate,
 		"section":               p.pageToPermalinkSection,
+		"sectionslug":           p.pageToPermalinkSectionSlug,
 		"sections":              p.pageToPermalinkSections,
+		"sectionslugs":          p.pageToPermalinkSectionSlugs,
 		"title":                 p.pageToPermalinkTitle,
 		"slug":                  p.pageToPermalinkSlugElseTitle,
 		"slugorfilename":        p.pageToPermalinkSlugElseFilename,
@@ -305,6 +317,18 @@ func (l PermalinkExpander) pageToPermalinkSection(p Page, _ string) (string, err
 	return p.Section(), nil
 }
 
+func (l PermalinkExpander) pageToPermalinkSectionSlug(p Page, a string) (string, error) {
+	if p.PathInfo().Dir() == "/" {
+		return "", nil
+	}
+	return l.pageToPermalinkSlugElseTitle(p.FirstSection(), a)
+}
+
+func (l PermalinkExpander) pageToPermalinkSectionSlugs(p Page, a string) (string, error) {
+	doWithSections := l.withPageAndSections(l.pageToPermalinkSlugElseTitle, path.Join)
+	return doWithSections(p.CurrentSection(), a)
+}
+
 func (l PermalinkExpander) pageToPermalinkSections(p Page, _ string) (string, error) {
 	return p.CurrentSection().SectionsPath(), nil
 }
@@ -427,6 +451,31 @@ func (l PermalinkExpander) toSliceFunc(cut string) func(s []string) []string {
 			return []string{}
 		}
 		return s[n1:n2]
+	}
+}
+
+// withPageAndSections creates a function that applies a given function to a page and its ancestor sections,
+// then joins the results using the provided join function.
+//
+// The function f is applied to each page in the hierarchy from the root section down to the given page,
+// excluding the root section itself. The join function is used to combine all the results into a single string.
+// This is commonly used for building permalink components that include section hierarchy information,
+// such as section slugs or section paths in URLs.
+func (l PermalinkExpander) withPageAndSections(f func(Page, string) (string, error), join func(...string) string) func(p Page, s string) (string, error) {
+	return func(p Page, s string) (string, error) {
+		pageWithAncestors := append(Pages{p}, p.Ancestors()...)
+		entries := make([]string, len(pageWithAncestors)-1)
+
+		// traverse down from the section on level 1 down to the page level
+		for i, page := range pageWithAncestors.Reverse()[1:] {
+			entry, err := f(page, s)
+			if err != nil {
+				return "", nil
+			}
+			entries[i] = entry
+		}
+
+		return join(entries...), nil
 	}
 }
 
