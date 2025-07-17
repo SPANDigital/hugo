@@ -454,6 +454,13 @@ func (l PermalinkExpander) toSliceFunc(cut string) func(s []string) []string {
 	}
 }
 
+// withPageAndSections creates a function that applies a given function to a page and its ancestor sections,
+// then joins the results using the provided join function.
+//
+// The function f is applied to each page in the hierarchy from the root section down to the given page,
+// excluding the root section itself. The join function is used to combine all the results into a single string.
+// This is commonly used for building permalink components that include section hierarchy information,
+// such as section slugs or section paths in URLs.
 func (l PermalinkExpander) withPageAndSections(f func(Page, string) (string, error), join func(...string) string) func(p Page, s string) (string, error) {
 	return func(p Page, s string) (string, error) {
 		pageWithAncestors := append(Pages{p}, p.Ancestors()...)
