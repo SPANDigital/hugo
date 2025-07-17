@@ -37,6 +37,8 @@ tag = "tags"
 [permalinks.page]
 withpageslug = '/pageslug/:slug/'
 withallbutlastsection = '/:sections[:last]/:slug/'
+withsectionslug = '/sectionslug/:sectionslug/:slug/'
+withsectionslugs = '/sectionslugs/:sectionslugs/:slug/'
 [permalinks.section]
 withfilefilename = '/sectionwithfilefilename/:filename/'
 withfilefiletitle = '/sectionwithfilefiletitle/:title/'
@@ -64,6 +66,41 @@ slug: "withfileslugvalue"
 -- content/nofiletitle1/p1.md --
 -- content/nofiletitle2/asdf/p1.md --
 -- content/withallbutlastsection/subsection/p1.md --
+-- content/withsectionslug/_index.md --
+---
+title: "Section Root"
+slug: "section-root-slug"
+---
+-- content/withsectionslug/subsection/_index.md --
+---
+title: "Subsection"
+slug: "subsection-slug"
+---
+-- content/withsectionslug/subsection/p1.md --
+---
+title: "Page 1"
+slug: "page1-slug"
+---
+-- content/withsectionslugs/_index.md --
+---
+title: "Sections Root"
+slug: "sections-root-slug"
+---
+-- content/withsectionslugs/level1/_index.md --
+---
+title: "Level 1"
+slug: "level1-slug"
+---
+-- content/withsectionslugs/level1/level2/_index.md --
+---
+title: "Level 2"
+slug: "level2-slug"
+---
+-- content/withsectionslugs/level1/level2/p1.md --
+---
+title: "Deep Page"
+slug: "deep-page-slug"
+---
 -- content/tags/_index.md --
 ---
 slug: "tagsslug"
@@ -87,6 +124,8 @@ slug: "mytagslug"
 	// No .File.TranslationBaseName on zero object etc. warnings.
 	b.Assert(b.H.Log.LoggCount(logg.LevelWarn), qt.Equals, 0)
 	b.AssertFileContent("public/pageslug/p1slugvalue/index.html", "Single|page|/pageslug/p1slugvalue/|")
+	b.AssertFileContent("public/sectionslug/section-root-slug/page1-slug/index.html", "Single|page|/sectionslug/section-root-slug/page1-slug/|")
+	b.AssertFileContent("public/sectionslugs/sections-root-slug/level1-slug/level2-slug/deep-page-slug/index.html", "Single|page|/sectionslugs/sections-root-slug/level1-slug/level2-slug/deep-page-slug/|")
 	b.AssertFileContent("public/sectionwithfilefilename/index.html", "List|section|/sectionwithfilefilename/|")
 	b.AssertFileContent("public/sectionwithfileslug/withfileslugvalue/index.html", "List|section|/sectionwithfileslug/withfileslugvalue/|")
 	b.AssertFileContent("public/sectionnofilefilename/index.html", "List|section|/sectionnofilefilename/|")
@@ -99,7 +138,7 @@ slug: "mytagslug"
 
 	permalinksConf := b.H.Configs.Base.Permalinks
 	b.Assert(permalinksConf, qt.DeepEquals, map[string]map[string]string{
-		"page":     {"withallbutlastsection": "/:sections[:last]/:slug/", "withpageslug": "/pageslug/:slug/"},
+		"page":     {"withallbutlastsection": "/:sections[:last]/:slug/", "withpageslug": "/pageslug/:slug/", "withsectionslug": "/sectionslug/:sectionslug/:slug/", "withsectionslugs": "/sectionslugs/:sectionslugs/:slug/"},
 		"section":  {"nofilefilename": "/sectionnofilefilename/:filename/", "nofileslug": "/sectionnofileslug/:slug/", "nofiletitle1": "/sectionnofiletitle1/:title/", "nofiletitle2": "/sectionnofiletitle2/:sections[:last]/", "withfilefilename": "/sectionwithfilefilename/:filename/", "withfilefiletitle": "/sectionwithfilefiletitle/:title/", "withfileslug": "/sectionwithfileslug/:slug/"},
 		"taxonomy": {"tags": "/tagsslug/:slug/"},
 		"term":     {"tags": "/tagsslug/tag/:slug/"},
