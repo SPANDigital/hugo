@@ -62,23 +62,36 @@ var testdataPermalinks = []struct {
 		p.title = "mytitle"
 		p.file = source.NewContentFileInfoFrom("/", "_index.md")
 	}, "/test-page/"},
+	// slug, title															// Section slug
 	{"/:sectionslug/", true, func(p *testPage) {
-		p.firstSection = &testPage{slug: "my-slug"}
+		p.doGetPage = func(string) Page {
+			return &testPage{slug: "my-slug"}
+		}
 	}, "/my-slug/"},
+	// slug, title															// Section slugs
 	{"/:sectionslugs/", true, func(p *testPage) {
-		p.currentSection.slug = "slug of c"
-		p.currentSection.ancestors[0].(*testPage).slug = "slug b"
-		p.currentSection.ancestors[1].(*testPage).title = "Title A"
-	}, "/title-a/slug-b/slug-of-c/"},
+		p.doGetPage = func(ref string) Page {
+			return &testPage{
+				slug: ref[strings.LastIndex(ref, "/")+1:] + "-slug",
+			}
+		}
+	}, "/a-slug/b-slug/c-slug/"},
+	// slice: slug, title
 	{"/:sectionslugs[0]/:sectionslugs[last]/", true, func(p *testPage) {
-		p.currentSection.slug = "last-slug"
-		p.currentSection.ancestors[0].(*testPage).slug = "second-slug" // set to ensure disclusion
-		p.currentSection.ancestors[1].(*testPage).slug = "first-slug"
-	}, "/first-slug/last-slug/"},
+		p.doGetPage = func(ref string) Page {
+			return &testPage{
+				slug: ref[strings.LastIndex(ref, "/")+1:] + "-slug",
+			}
+		}
+	}, "/a-slug/c-slug/"},
+	// slice: slug, title
 	{"/:sectionslugs[last]/", true, func(p *testPage) {
-		p.currentSection.slug = "last-slug" // set to ensure disclusion
-		p.currentSection.ancestors[1].(*testPage).slug = "first-slug"
-	}, "/last-slug/"},
+		p.doGetPage = func(ref string) Page {
+			return &testPage{
+				slug: ref[strings.LastIndex(ref, "/")+1:] + "-slug",
+			}
+		}
+	}, "/c-slug/"},
 	// Failures
 	{"/blog/:fred", false, nil, ""},
 	{"/:year//:title", false, nil, ""},

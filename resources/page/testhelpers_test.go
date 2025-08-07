@@ -67,14 +67,12 @@ func newTestPageWithFile(filename string) *testPage {
 	}
 
 	return &testPage{
-		params:       make(map[string]any),
-		data:         make(map[string]any),
-		file:         file,
-		pathInfo:     file.FileInfo().Meta().PathInfo,
-		firstSection: &testPage{section: "a"},
+		params:   make(map[string]any),
+		data:     make(map[string]any),
+		file:     file,
+		pathInfo: file.FileInfo().Meta().PathInfo,
 		currentSection: &testPage{
 			sectionEntries: []string{"a", "b", "c"},
-			ancestors: Pages{&testPage{section: "b"}, &testPage{section: "c"}, &testPage{}},
 		},
 		site: testSite{l: l},
 	}
@@ -111,11 +109,11 @@ type testPage struct {
 
 	file *source.File
 
-	firstSection   *testPage
 	currentSection *testPage
 	sectionEntries []string
 
-	ancestors Pages
+	// Functions
+	doGetPage func(ref string) Page
 }
 
 func (p *testPage) Aliases() []string {
@@ -207,7 +205,7 @@ func (p *testPage) Filename() string {
 }
 
 func (p *testPage) FirstSection() Page {
-	return p.firstSection
+	panic("testpage: not implemented")
 }
 
 func (p *testPage) FuzzyWordCount(context.Context) int {
@@ -215,6 +213,9 @@ func (p *testPage) FuzzyWordCount(context.Context) int {
 }
 
 func (p *testPage) GetPage(ref string) (Page, error) {
+	if p.doGetPage != nil {
+		return p.doGetPage(ref), nil
+	}
 	panic("testpage: not implemented")
 }
 
@@ -291,7 +292,7 @@ func (p *testPage) IsTranslated() bool {
 }
 
 func (p *testPage) Ancestors() Pages {
-	return p.ancestors
+	panic("testpage: not implemented")
 }
 
 func (p *testPage) Keywords() []string {
